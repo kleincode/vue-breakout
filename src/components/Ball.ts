@@ -1,3 +1,5 @@
+import Paddle from './Paddle';
+
 export default class Ball {
   x = 200;
 
@@ -22,19 +24,32 @@ export default class Ball {
     ctx.closePath();
   }
 
-  move(width: number, height: number) {
+  private changeColor() {
+    this.colorIndex = (this.colorIndex + 1) % this.colors.length;
+  }
+
+  move(width: number, paddle: Paddle) {
     const { x, y, radius } = this;
     // detect wall collisions
-    if (y + this.dy < radius || y + this.dy + radius > height) {
+    if (y + this.dy < radius) {
       this.dy = -this.dy;
-      this.colorIndex = (this.colorIndex + 1) % this.colors.length;
+      this.changeColor();
     }
     if (x + this.dx < radius || x + this.dx + radius > width) {
       this.dx = -this.dx;
-      this.colorIndex = (this.colorIndex + 1) % this.colors.length;
+      this.changeColor();
+    }
+    // detect paddle collision
+    if (this.dy >= 0 && y + radius > paddle.y && x >= paddle.x && x <= paddle.x + paddle.width) {
+      this.dy = -this.dy;
+      this.changeColor();
     }
     // move
     this.x += this.dx;
     this.y += this.dy;
+  }
+
+  isGameOver(height: number) {
+    return this.y + this.radius > height;
   }
 }

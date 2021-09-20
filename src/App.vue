@@ -1,6 +1,10 @@
 <template>
   <h1>Breakout Game</h1>
-  <GameCanvas/>
+  <GameCanvas ref="gameCanvas" /><br>
+  <div style="display: inline-flex;">
+    <button @click="restart">Restart</button>
+    <button @click="switchPauseState">{{ paused ? "Resume" : "Pause" }}</button>
+  </div>
 </template>
 
 <script lang="ts">
@@ -12,7 +16,28 @@ import GameCanvas from './components/GameCanvas.vue';
     GameCanvas,
   },
 })
-export default class App extends Vue {}
+export default class App extends Vue {
+  declare $refs: {
+    gameCanvas: GameCanvas
+  }
+
+  paused = false;
+
+  restart() {
+    this.$refs.gameCanvas.restart();
+    this.paused = false;
+  }
+
+  switchPauseState() {
+    if (this.paused) {
+      this.$refs.gameCanvas.resume();
+      this.paused = false;
+    } else {
+      this.$refs.gameCanvas.pause();
+      this.paused = true;
+    }
+  }
+}
 </script>
 
 <style>
