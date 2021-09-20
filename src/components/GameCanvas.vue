@@ -4,7 +4,7 @@
     :height="height"
     ref="canvas"
     id="canvas"
-    :class="isGameOver ? 'game-over' : ''"
+    :class="isGameOver ? 'game-over' : (isGameWon ? 'game-won' : '')"
   ></canvas>
 </template>
 <script lang="ts">
@@ -30,9 +30,13 @@ export default class GameCanvas extends Vue {
 
   bricks: Brick[] = [];
 
-  interval = 0;
-
   isGameOver = false;
+
+  isGameWon = false;
+
+  score = 0;
+
+  paused = false;
 
   mounted() {
     this.initCanvas();
@@ -46,40 +50,18 @@ export default class GameCanvas extends Vue {
     document.addEventListener('keyup', this.onKeyUp, false);
     this.isGameOver = false;
     this.restart();
+    requestAnimationFrame(this.tick);
   }
 
   tick() {
-    this.paddle.move(this.width);
-    this.ball.move(this.width, this.paddle, this.bricks);
-    if (this.ball.isGameOver(this.height)) this.gameOver();
-    else this.updateCanvas();
-  }
-
-  restart() {
-    this.pause();
-    this.isGameOver = false;
-    this.ball = new Ball();
-    this.paddle = new Paddle();
-    this.bricks = Brick.generateBrickTable(this.width, 16, 5, 6, 10, 30);
-    this.resume();
-  }
-
-  pause() {
-    clearInterval(this.interval);
-  }
-
-  resume() {
-    this.interval = setInterval(this.tick, 10);
-  }
-
-  gameOver() {
-    this.isGameOver = true;
-    clearInterval(this.interval);
-    if (this.context) {
-      const ctx = this.context;
-      ctx.clearRect(0, 0, this.width, this.height);
-      this.bricks.forEach((brick) => brick.draw(ctx));
+    if (!this.paused) {
+      this.paddle.move(this.width);
+      this.ball.move(this, this.paddle, this.bricks);
+      if (this.ball.isGameOver(this.height)) this.gameOver();
+      else if (this.bricks.every((brick) => !brick.alive)) this.gameWon();
+      else this.updateCanvas();
     }
+    requestAnimationFrame(this.tick);
   }
 
   updateCanvas() {
@@ -92,6 +74,53 @@ export default class GameCanvas extends Vue {
     this.ball.draw(ctx);
     this.bricks.forEach((brick) => brick.draw(ctx));
     this.paddle.draw(ctx);
+  }
+
+  restart() {
+    this.pause();
+    this.isGameOver = false;
+    this.isGameWon = false;
+    this.ball = new Ball();
+    this.paddle = new Paddle();
+    this.bricks = Brick.generateBrickTable(this.width, 16, 5, 6, 10, 30);
+    this.resume();
+  }
+
+  pause() {
+    this.paused = true;
+  }
+
+  resume() {
+    this.paused = false;
+  }
+
+  gameOver() {
+    this.isGameOver = true;
+    this.paused = true;
+    if (this.context) {
+      const ctx = this.context;
+      ctx.clearRect(0, 0, this.width, this.height);
+      this.bricks.forEach((brick) => brick.draw(ctx));
+    }
+  }
+
+  gameWon() {
+    this.isGameWon = true;
+    this.paused = true;
+    if (this.context) {
+      const ctx = this.context;
+      ctx.clearRect(0, 0, this.width, this.height);
+      ctx.beginPath();
+      ctx.rect(0, 0, this.width, this.height);
+      ctx.fillStyle = '#00aa00';
+      ctx.fill();
+      ctx.closePath();
+    }
+  }
+
+  onBrickHit() {
+    this.score += 10;
+    this.$emit('updateScore', this.score);
   }
 
   onKeyDown(e: KeyboardEvent) {
@@ -125,5 +154,9 @@ export default class GameCanvas extends Vue {
 }
 #canvas.game-over {
   border-color: #ff0000;
+}
+
+#canvas.game-won {
+  border-color: #00cc22;
 }
 </style>

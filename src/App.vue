@@ -1,6 +1,9 @@
 <template>
   <h1>Breakout Game</h1>
-  <GameCanvas ref="gameCanvas" /><br>
+  <div style="text-align: center;">
+    Score: {{ paddedScore }}
+  </div>
+  <GameCanvas ref="gameCanvas" @updateScore="updateScore" /><br>
   <div style="display: inline-flex;">
     <button @click="restart">Restart</button>
     <button @click="switchPauseState">{{ paused ? "Resume" : "Pause" }}</button>
@@ -23,9 +26,19 @@ export default class App extends Vue {
 
   paused = false;
 
+  score = 0;
+
+  get paddedScore() {
+    return (`0000${this.score}`).slice(-4);
+  }
+
   restart() {
     this.$refs.gameCanvas.restart();
     this.paused = false;
+  }
+
+  updateScore(score: number) {
+    this.score = score;
   }
 
   switchPauseState() {

@@ -29,11 +29,12 @@ export default class Ball {
     this.colorIndex = (this.colorIndex + 1) % this.colors.length;
   }
 
-  move(width: number, paddle: Paddle, bricks: Brick[]) {
+  move(game: any, paddle: Paddle, bricks: Brick[]) {
     // move
     this.x += this.dx;
     this.y += this.dy;
     const { x, y, radius } = this;
+    const { width } = game;
     // detect wall collisions
     if (y + this.dy < radius) {
       this.dy = -this.dy;
@@ -63,6 +64,7 @@ export default class Ball {
     ));
     if (collBrick) {
       collBrick.kill();
+      game.onBrickHit();
       this.dy = -this.dy;
       this.changeColor();
     }
