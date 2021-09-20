@@ -1,13 +1,14 @@
+import Brick from './Brick';
 import Paddle from './Paddle';
 
 export default class Ball {
   x = 200;
 
-  y = 180;
+  y = 160;
 
-  dx = 5;
+  dx = 2;
 
-  dy = -4;
+  dy = -3;
 
   radius = 10;
 
@@ -28,25 +29,43 @@ export default class Ball {
     this.colorIndex = (this.colorIndex + 1) % this.colors.length;
   }
 
-  move(width: number, paddle: Paddle) {
+  move(width: number, paddle: Paddle, bricks: Brick[]) {
+    // move
+    this.x += this.dx;
+    this.y += this.dy;
     const { x, y, radius } = this;
     // detect wall collisions
     if (y + this.dy < radius) {
       this.dy = -this.dy;
+      this.y = radius + (radius - y);
       this.changeColor();
     }
-    if (x + this.dx < radius || x + this.dx + radius > width) {
+    if (x + this.dx < radius) {
       this.dx = -this.dx;
+      this.x = radius + (radius - x);
+      this.changeColor();
+    } else if (x + this.dx + radius > width) {
+      this.dx = -this.dx;
+      this.x = width - radius - (x + radius - width);
       this.changeColor();
     }
     // detect paddle collision
     if (this.dy >= 0 && y + radius > paddle.y && x >= paddle.x && x <= paddle.x + paddle.width) {
       this.dy = -this.dy;
+      this.y = paddle.y - radius;
       this.changeColor();
     }
-    // move
-    this.x += this.dx;
-    this.y += this.dy;
+    // detect brick collision
+    const collBrick = bricks.find((brick) => (
+      brick.alive
+      && x + radius >= brick.x && x - radius <= brick.x + brick.width
+      && y + radius >= brick.y && y - radius <= brick.y + brick.height
+    ));
+    if (collBrick) {
+      collBrick.kill();
+      this.dy = -this.dy;
+      this.changeColor();
+    }
   }
 
   isGameOver(height: number) {
